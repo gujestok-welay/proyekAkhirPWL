@@ -162,15 +162,19 @@ $db = $database->getConnection();
                 $barangObj = new Barang($db);
                 $dataBarang = $barangObj->tampilSemua();
             ?>
-                <h2 class="mb-4"><i class="fas fa-box"></i> Inventaris Barang</h2>
+                <div class="d-flex justify-content-between mb-4">
+                    <h2><i class="fas fa-box"></i> Inventaris Barang</h2>
+                    <a href="tambah_barang.php" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Barang</a>
+                </div>
+
                 <div class="card p-3">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover align-middle">
                             <thead class="table-dark">
                                 <tr>
                                     <th>No</th>
-                                    <th>Kode</th>
-                                    <th>Nama Barang</th>
+                                    <th>Gambar</th>
+                                    <th>Kode & Nama</th>
                                     <th>Stok</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -180,8 +184,19 @@ $db = $database->getConnection();
                                 while ($row = $dataBarang->fetch_assoc()): ?>
                                     <tr>
                                         <td><?= $no++ ?></td>
-                                        <td><span class="badge bg-secondary"><?= $row['kode_barang'] ?></span></td>
                                         <td>
+                                            <?php
+                                            $img = $row['gambar'] ? $row['gambar'] : 'default.jpg';
+                                            // Cek jika file ada di folder uploads, jika tidak pakai placeholder
+                                            $imgPath = "../uploads/" . $img;
+                                            if (!file_exists($imgPath)) {
+                                                $img = "default.jpg";
+                                            }
+                                            ?>
+                                            <img src="../uploads/<?= $img ?>" width="60" height="60" style="object-fit: cover; border-radius: 5px;">
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary mb-1"><?= $row['kode_barang'] ?></span><br>
                                             <strong><?= $row['nama_barang'] ?></strong><br>
                                             <small class="text-muted"><?= $row['deskripsi'] ?></small>
                                         </td>
@@ -194,7 +209,10 @@ $db = $database->getConnection();
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+
+                                            <a href="aksi_barang.php?aksi=hapus&id=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus barang ini?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
