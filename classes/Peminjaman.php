@@ -83,6 +83,15 @@ class Peminjaman
         return $this->conn->query($query);
     }
 
+    // [MODUL 4] Fungsi Hitung Jumlah Total Transaksi Peminjaman
+    public function hitungJumlah()
+    {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+        $result = $this->conn->query($query);
+        $row = $result->fetch_assoc();
+        return $row['total'];
+    }
+
     // 3. FUNGSI UPDATE STATUS
     public function updateStatus($id, $status_baru)
     {

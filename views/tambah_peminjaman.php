@@ -103,7 +103,17 @@ if (isset($_POST['submit'])) {
                                 <label class="form-label">Pilih Barang</label>
                                 <select name="barang_id" class="form-select mb-2">
                                     <?php while ($b = $listBarang->fetch_assoc()): ?>
-                                        <option value="<?= $b['id'] ?>"><?= $b['nama_barang'] ?> (Sisa Stok: <?= $b['stok'] ?>)</option>
+                                        <?php if ($b['stok'] == 0): ?>
+                                            <!-- [UX IMPROVEMENT] Barang stok habis: disabled + gray out -->
+                                            <option value="<?= $b['id'] ?>" disabled style="background-color: #e9ecef; color: #999;">
+                                                <?= $b['nama_barang'] ?> (STOK HABIS)
+                                            </option>
+                                        <?php else: ?>
+                                            <!-- Barang tersedia: normal -->
+                                            <option value="<?= $b['id'] ?>">
+                                                <?= $b['nama_barang'] ?> (Sisa Stok: <?= $b['stok'] ?>)
+                                            </option>
+                                        <?php endif; ?>
                                     <?php endwhile; ?>
                                 </select>
                                 <label class="form-label">Jumlah Pinjam</label>
@@ -169,7 +179,7 @@ if (isset($_POST['submit'])) {
             }
         }
 
-        // 2. Fungsi Validasi Tanggal (Client Side)
+        // 2. Fungsi Validasi Tanggal (Client Side) - Enhanced UX
         function validateForm() {
             var tglPinjam = document.getElementById("tgl_pinjam").value;
             var tglKembali = document.getElementById("tgl_kembali").value;
@@ -181,6 +191,22 @@ if (isset($_POST['submit'])) {
 
                 // Cek apakah tanggal selesai lebih kecil dari mulai?
                 if (end <= start) {
+                    // [UX IMPROVEMENT] Deteksi kasus khusus: User salah pilih 12:00 AM
+                    var endHour = end.getHours();
+                    var endMinute = end.getMinutes();
+                    var startHour = start.getHours();
+
+                    // Jika waktu selesai adalah 12:00 AM (00:00) dan waktu mulai adalah jam pagi (00:00 - 11:59)
+                    // Kemungkinan besar user salah memilih, maksudnya 12:00 PM (noon)
+                    if (endHour === 0 && endMinute === 0 && startHour >= 0 && startHour < 12) {
+                        alert("⚠️ PERINGATAN WAKTU:\n\n" +
+                            "Apakah maksud Anda 12:00 PM (Siang)?\n" +
+                            "12:00 AM adalah tengah malam (00:00).\n\n" +
+                            "Silakan periksa kembali waktu selesai Anda.");
+                        return false;
+                    }
+
+                    // Pesan error standar untuk kasus lainnya
                     alert("⚠️ ERROR LOGIKA:\nTanggal Selesai tidak boleh lebih awal dari Tanggal Mulai!");
                     return false; // Batalkan submit form
                 }

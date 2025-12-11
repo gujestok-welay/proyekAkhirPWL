@@ -126,6 +126,14 @@ $db = $database->getConnection();
 
         switch ($page) {
             case 'home':
+                // [MODUL 4] Hitung Statistik Dashboard
+                $barangObj = new Barang($db);
+                $ruangObj = new Ruangan($db);
+                $pinjamObj = new Peminjaman($db);
+
+                $totalBarang = $barangObj->hitungJumlah();
+                $totalRuangan = $ruangObj->hitungJumlah();
+                $totalPeminjaman = $pinjamObj->hitungJumlah();
         ?>
                 <h2 class="mb-4">Dashboard Utama</h2>
                 <div class="row">
@@ -140,18 +148,24 @@ $db = $database->getConnection();
                         <div class="card bg-primary text-white p-3">
                             <h3><i class="fas fa-box-open"></i> Barang</h3>
                             <p>Manajemen Inventaris</p>
+                            <hr class="bg-white">
+                            <h2 class="mb-0"><i class="fas fa-database"></i> <?= $totalBarang ?> Item</h2>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="card bg-success text-white p-3">
                             <h3><i class="fas fa-building"></i> Ruangan</h3>
                             <p>Manajemen Fasilitas</p>
+                            <hr class="bg-white">
+                            <h2 class="mb-0"><i class="fas fa-door-open"></i> <?= $totalRuangan ?> Ruang</h2>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="card bg-warning text-dark p-3">
                             <h3><i class="fas fa-clipboard-list"></i> Transaksi</h3>
                             <p>Peminjaman & Booking</p>
+                            <hr>
+                            <h2 class="mb-0"><i class="fas fa-history"></i> <?= $totalPeminjaman ?> Record</h2>
                         </div>
                     </div>
                 </div>
@@ -160,11 +174,53 @@ $db = $database->getConnection();
 
             case 'barang':
                 $barangObj = new Barang($db);
-                $dataBarang = $barangObj->tampilSemua();
+
+                // [MODUL 4 - Latihan 7] Logic Pencarian
+                $keyword = isset($_GET['keyword']) ? $_GET['keyword'] : '';
+
+                if (!empty($keyword)) {
+                    // Jika ada keyword, panggil method cariBarang()
+                    $dataBarang = $barangObj->cariBarang($keyword);
+                } else {
+                    // Jika tidak ada keyword, tampilkan semua data
+                    $dataBarang = $barangObj->tampilSemua();
+                }
             ?>
                 <div class="d-flex justify-content-between mb-4">
                     <h2><i class="fas fa-box"></i> Inventaris Barang</h2>
                     <a href="tambah_barang.php" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Barang</a>
+                </div>
+
+                <!-- [MODUL 4 - Latihan 7] Form Pencarian -->
+                <div class="card mb-3 p-3">
+                    <form method="GET" action="dashboard.php" class="row g-3 align-items-center">
+                        <input type="hidden" name="page" value="barang">
+                        <div class="col-md-8">
+                            <label class="form-label"><i class="fas fa-search"></i> Cari Barang</label>
+                            <input type="text" name="keyword" class="form-control"
+                                placeholder="Ketik Nama Barang atau Kode..."
+                                value="<?= htmlspecialchars($keyword) ?>">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-search"></i> Cari
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <a href="dashboard.php?page=barang" class="btn btn-secondary w-100">
+                                <i class="fas fa-redo"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+
+                    <?php if (!empty($keyword)): ?>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle"></i> Hasil pencarian untuk: <strong>"<?= htmlspecialchars($keyword) ?>"</strong>
+                            (Ditemukan: <strong><?= $dataBarang->num_rows ?> data</strong>)
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="card p-3">
@@ -208,7 +264,7 @@ $db = $database->getConnection();
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                                            <a href="edit_barang.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
 
                                             <a href="aksi_barang.php?aksi=hapus&id=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus barang ini?')">
                                                 <i class="fas fa-trash"></i>
@@ -227,31 +283,83 @@ $db = $database->getConnection();
                 $ruangObj = new Ruangan($db);
                 $dataRuang = $ruangObj->tampilSemua();
             ?>
-                <h2 class="mb-4"><i class="fas fa-door-open"></i> Daftar Ruangan</h2>
+                <div class="d-flex justify-content-between mb-4">
+                    <h2><i class="fas fa-door-open"></i> Daftar Ruangan</h2>
+                    <a href="tambah_ruangan.php" class="btn btn-success"><i class="fas fa-plus"></i> Tambah Ruangan</a>
+                </div>
+
+                <?php if (isset($_GET['msg'])): ?>
+                    <div class="alert alert-<?= $_GET['msg'] == 'added' || $_GET['msg'] == 'updated' ? 'success' : ($_GET['msg'] == 'deleted' ? 'info' : 'danger') ?> alert-dismissible fade show">
+                        <?php
+                        if ($_GET['msg'] == 'added') echo '<i class="fas fa-check-circle"></i> Ruangan berhasil ditambahkan!';
+                        elseif ($_GET['msg'] == 'updated') echo '<i class="fas fa-check-circle"></i> Ruangan berhasil diupdate!';
+                        elseif ($_GET['msg'] == 'deleted') echo '<i class="fas fa-trash"></i> Ruangan berhasil dihapus!';
+                        else echo '<i class="fas fa-exclamation-triangle"></i> Terjadi kesalahan!';
+                        ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
                 <div class="card p-3">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>No</th>
-                                <th>Kode</th>
-                                <th>Nama Ruangan</th>
-                                <th>Lokasi</th>
-                                <th>Kapasitas</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php $no = 1;
-                            while ($row = $dataRuang->fetch_assoc()): ?>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead class="table-dark">
                                 <tr>
-                                    <td><?= $no++ ?></td>
-                                    <td><span class="badge bg-secondary"><?= $row['kode_ruang'] ?></span></td>
-                                    <td><?= $row['nama_ruangan'] ?></td>
-                                    <td><i class="fas fa-map-marker-alt text-danger"></i> <?= $row['lokasi'] ?></td>
-                                    <td><?= $row['kapasitas'] ?> Orang</td>
+                                    <th>No</th>
+                                    <th>Gambar</th>
+                                    <th>Kode & Nama</th>
+                                    <th>Lokasi</th>
+                                    <th>Kapasitas</th>
+                                    <th>Aksi</th>
                                 </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php $no = 1;
+                                while ($row = $dataRuang->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?= $no++ ?></td>
+                                        <td>
+                                            <?php
+                                            // Handle backward compatibility jika kolom 'gambar' belum ada
+                                            $img = isset($row['gambar']) && $row['gambar'] ? $row['gambar'] : 'default.jpg';
+                                            $imgPath = "../uploads/" . $img;
+                                            if (!file_exists($imgPath)) {
+                                                $img = "default.jpg";
+                                            }
+                                            ?>
+                                            <img src="../uploads/<?= $img ?>" width="60" height="60" style="object-fit: cover; border-radius: 5px;">
+                                        </td>
+                                        <td>
+                                            <?php
+                                            // Handle kolom kode yang mungkin bernama 'kode_ruang' atau 'kode_ruangan'
+                                            $kode = $row['kode_ruangan'] ?? $row['kode_ruang'] ?? 'N/A';
+                                            $fasilitas = $row['fasilitas'] ?? 'Tidak ada informasi';
+                                            $lokasi = $row['lokasi'] ?? 'Tidak ditentukan';
+                                            ?>
+                                            <span class="badge bg-secondary mb-1"><?= $kode ?></span><br>
+                                            <strong><?= $row['nama_ruangan'] ?></strong><br>
+                                            <small class="text-muted"><i class="fas fa-info-circle"></i> <?= $fasilitas ?></small>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-map-marker-alt text-danger"></i> <?= $lokasi ?>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info text-dark"><i class="fas fa-users"></i> <?= $row['kapasitas'] ?> Orang</span>
+                                        </td>
+                                        <td>
+                                            <a href="edit_ruangan.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
+                                            <a href="aksi_ruangan.php?aksi=hapus&id=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus ruangan ini?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             <?php
                 break;
