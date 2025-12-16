@@ -23,7 +23,7 @@ if (isset($_POST['submit'])) {
     $deskripsi = $_POST['deskripsi'];
     $stok = $_POST['stok'];
 
-    // Proses Upload Gambar
+    // Proses Upload Gambar dengan Cek Duplikasi (Hash)
     $gambar = "default.jpg"; // Default jika tidak ada upload
     if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === 0) {
         $target_dir = "../uploads/";
@@ -39,10 +39,20 @@ if (isset($_POST['submit'])) {
         // Validasi ekstensi
         $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
         if (in_array($file_ext, $allowed_ext)) {
-            // Rename file agar unik (Modul 5)
-            $new_name = uniqid() . '.' . $file_ext;
-            if (move_uploaded_file($file_tmp, $target_dir . $new_name)) {
-                $gambar = $new_name;
+            $file_hash = md5_file($file_tmp);
+            $found = false;
+            foreach (glob($target_dir . '*.' . $file_ext) as $existing_file) {
+                if (md5_file($existing_file) === $file_hash) {
+                    $gambar = basename($existing_file);
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $new_name = uniqid() . '.' . $file_ext;
+                if (move_uploaded_file($file_tmp, $target_dir . $new_name)) {
+                    $gambar = $new_name;
+                }
             }
         } else {
             $error = "Ekstensi file tidak valid! Hanya JPG, PNG, GIF.";
@@ -65,8 +75,55 @@ if (isset($_POST['submit'])) {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tambah Barang</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @media (max-width: 575.98px) {
+            .container {
+                padding: 0 10px !important;
+                margin-top: 15px !important;
+            }
+
+            .col-md-8 {
+                max-width: 100% !important;
+            }
+
+            .card {
+                margin: 0 !important;
+            }
+
+            .card-header {
+                padding: 12px 15px !important;
+            }
+
+            .form-label {
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+
+            .form-control,
+            .form-select {
+                font-size: 13px;
+                padding: 8px 10px !important;
+            }
+
+            .d-grid {
+                gap: 1rem !important;
+            }
+
+            .btn {
+                width: 100% !important;
+                padding: 10px !important;
+                font-size: 13px !important;
+            }
+
+            .alert {
+                font-size: 12px;
+                padding: 10px !important;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -83,7 +140,8 @@ if (isset($_POST['submit'])) {
                 <form method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label>Kode Barang <span class="badge bg-success">Auto Generate</span></label>
-                        <input type="text" name="kode_barang" class="form-control" value="<?= $kodeBarangBaru ?>" readonly required>
+                        <input type="text" name="kode_barang" class="form-control" value="<?= $kodeBarangBaru ?>"
+                            readonly required>
                         <small class="text-muted">Kode otomatis, tidak bisa diubah</small>
                     </div>
                     <div class="mb-3">

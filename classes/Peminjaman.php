@@ -10,10 +10,11 @@ class Peminjaman
     }
 
     // 1. FUNGSI BUAT PINJAM BARU (YANG SUDAH DIPERBAIKI)
-    public function tambahPeminjaman($user_id, $jenis, $item_id, $jumlah, $tgl_pinjam, $tgl_kembali, $keterangan)
+    public function tambahPeminjaman($user_id, $nama_peminjam, $jenis, $item_id, $jumlah, $tgl_pinjam, $tgl_kembali, $keterangan)
     {
 
         // A. SANITASI INPUT (Security anti-hack)
+        $nama_peminjam = $this->conn->real_escape_string($nama_peminjam);
         $keterangan = $this->conn->real_escape_string($keterangan);
         $tgl_pinjam = $this->conn->real_escape_string($tgl_pinjam);
         $tgl_kembali = $this->conn->real_escape_string($tgl_kembali);
@@ -55,9 +56,9 @@ class Peminjaman
 
         // C. PROSES INSERT
         $query = "INSERT INTO " . $this->table_name . " 
-                  (user_id, jenis_peminjaman, barang_id, ruangan_id, jumlah, tgl_pinjam, tgl_kembali, keterangan, status)
+                  (user_id, nama_peminjam, jenis_peminjaman, barang_id, ruangan_id, jumlah, tgl_pinjam, tgl_kembali, keterangan, status)
                   VALUES 
-                  ('$user_id', '$jenis', $barang_id, $ruangan_id, '$qty', '$tgl_pinjam', '$tgl_kembali', '$keterangan', 'pending')";
+                  ('$user_id', '$nama_peminjam', '$jenis', $barang_id, $ruangan_id, '$qty', '$tgl_pinjam', '$tgl_kembali', '$keterangan', 'pending')";
 
         if ($this->conn->query($query)) {
             // Kurangi stok JIKA barang

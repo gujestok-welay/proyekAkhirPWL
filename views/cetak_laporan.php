@@ -21,6 +21,7 @@ $riwayat = $pinjamObj->tampilRiwayat();
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Laporan Peminjaman Lab</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -45,6 +46,48 @@ $riwayat = $pinjamObj->tampilRiwayat();
         @media print {
             .no-print {
                 display: none;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .container {
+                padding: 0 10px;
+            }
+
+            h3 {
+                font-size: 1rem;
+            }
+
+            h5 {
+                font-size: 0.9rem;
+            }
+
+            small {
+                font-size: 10px;
+            }
+
+            .table {
+                font-size: 11px;
+            }
+
+            .table th,
+            .table td {
+                padding: 6px 4px !important;
+            }
+
+            .no-print .btn {
+                width: 100%;
+                margin-bottom: 8px;
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+
+            .no-print {
+                margin-bottom: 15px;
+            }
+
+            .ttd-area {
+                width: 150px;
             }
         }
     </style>
@@ -84,7 +127,8 @@ $riwayat = $pinjamObj->tampilRiwayat();
                 while ($row = $riwayat->fetch_assoc()): ?>
                     <tr>
                         <td><?= $no++ ?></td>
-                        <td><?= $row['nama_lengkap'] ?></td>
+                        <td><?= !empty($row['nama_peminjam']) ? htmlspecialchars($row['nama_peminjam']) : htmlspecialchars($row['nama_lengkap']) ?>
+                        </td>
                         <td><?= strtoupper($row['jenis_peminjaman']) ?></td>
                         <td>
                             <?php

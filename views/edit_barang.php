@@ -35,7 +35,7 @@ if (isset($_POST['submit'])) {
     $stok = $_POST['stok'];
     $gambarLama = $_POST['gambar_lama']; // Hidden input
 
-    // Proses Upload Gambar (Jika user upload file baru)
+    // Proses Upload Gambar (Jika user upload file baru) dengan Cek Duplikasi (Hash)
     $gambarBaru = ""; // Default kosong, nanti akan diisi gambar lama
     if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === 0) {
         $target_dir = "../uploads/";
@@ -53,10 +53,20 @@ if (isset($_POST['submit'])) {
         if (in_array($file_ext, $allowed_ext)) {
             // Validasi ukuran file (max 2MB)
             if ($_FILES['gambar']['size'] <= 2097152) {
-                // Rename file agar unik (Modul 5)
-                $new_name = uniqid() . '.' . $file_ext;
-                if (move_uploaded_file($file_tmp, $target_dir . $new_name)) {
-                    $gambarBaru = $new_name;
+                $file_hash = md5_file($file_tmp);
+                $found = false;
+                foreach (glob($target_dir . '*.' . $file_ext) as $existing_file) {
+                    if (md5_file($existing_file) === $file_hash) {
+                        $gambarBaru = basename($existing_file);
+                        $found = true;
+                        break;
+                    }
+                }
+                if (!$found) {
+                    $new_name = uniqid() . '.' . $file_ext;
+                    if (move_uploaded_file($file_tmp, $target_dir . $new_name)) {
+                        $gambarBaru = $new_name;
+                    }
                 }
             } else {
                 $error = "Ukuran file terlalu besar! Max 2MB.";
@@ -85,8 +95,61 @@ if (isset($_POST['submit'])) {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Edit Barang</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 20px 10px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .form-control,
+        .form-select,
+        textarea {
+            font-size: 14px;
+        }
+
+        @media (max-width: 575.98px) {
+            .container {
+                padding: 15px 8px;
+            }
+
+            h4 {
+                font-size: 1.2rem;
+            }
+
+            label {
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .form-control,
+            .form-select {
+                font-size: 13px;
+                padding: 8px 10px;
+            }
+
+            textarea {
+                font-size: 13px;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -105,34 +168,35 @@ if (isset($_POST['submit'])) {
                     <input type="hidden" name="gambar_lama" value="<?= $dataBarang['gambar'] ?>">
 
                     <div class="mb-3">
-                        <label>Kode Barang <span class="badge bg-secondary">Tidak dapat diubah</span></label>
-                        <input type="text" name="kode_barang" class="form-control" value="<?= $dataBarang['kode_barang'] ?>" readonly>
-                        <small class="text-muted">Primary key tidak bisa diubah</small>
-                    </div>
-                    <div class="mb-3">
                         <label>Nama Barang</label>
-                        <input type="text" name="nama_barang" class="form-control" value="<?= $dataBarang['nama_barang'] ?>" required>
+                        <input type="text" name="nama_barang" class="form-control"
+                            value="<?= $dataBarang['nama_barang'] ?>" required>
                     </div>
                     <div class="mb-3">
                         <label>Deskripsi</label>
-                        <textarea name="deskripsi" class="form-control" rows="3"><?= $dataBarang['deskripsi'] ?></textarea>
+                        <textarea name="deskripsi" class="form-control"
+                            rows="3"><?= $dataBarang['deskripsi'] ?></textarea>
                     </div>
                     <div class="mb-3">
                         <label>Stok</label>
-                        <input type="number" name="stok" class="form-control" value="<?= $dataBarang['stok'] ?>" required>
+                        <input type="number" name="stok" class="form-control" value="<?= $dataBarang['stok'] ?>"
+                            required>
                     </div>
                     <div class="mb-3">
                         <label>Foto Barang</label>
 
                         <!-- [MODUL 5] Tampilkan gambar current sebagai thumbnail -->
                         <div class="mb-2">
-                            <img src="../uploads/<?= $dataBarang['gambar'] ?>" alt="Current Image" width="150" height="150" style="object-fit: cover; border: 2px solid #ddd; border-radius: 8px;">
+                            <img src="../uploads/<?= $dataBarang['gambar'] ?>" alt="Current Image" width="150"
+                                height="150" style="object-fit: cover; border: 2px solid #ddd; border-radius: 8px;">
                             <br>
-                            <small class="text-muted">Gambar saat ini: <strong><?= $dataBarang['gambar'] ?></strong></small>
+                            <small class="text-muted">Gambar saat ini:
+                                <strong><?= $dataBarang['gambar'] ?></strong></small>
                         </div>
 
                         <input type="file" name="gambar" class="form-control">
-                        <small class="text-muted">Kosongkan jika tidak ingin mengubah gambar. Format: JPG, PNG, GIF. Max: 2MB</small>
+                        <small class="text-muted">Kosongkan jika tidak ingin mengubah gambar. Format: JPG, PNG, GIF.
+                            Max: 2MB</small>
                     </div>
 
                     <button type="submit" name="submit" class="btn btn-success">
@@ -147,6 +211,8 @@ if (isset($_POST['submit'])) {
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/script.js"></script>
 </body>
 
 </html>

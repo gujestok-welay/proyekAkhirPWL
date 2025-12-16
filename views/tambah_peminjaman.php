@@ -26,6 +26,7 @@ $listRuang = $ruangObj->tampilSemua();
 if (isset($_POST['submit'])) {
     // 1. Tangkap Inputan
     $user_id = $_SESSION['user_id'];
+    $nama_peminjam = $_POST['nama_peminjam'];
     $jenis = $_POST['jenis_peminjaman'];
     $item_id = ($jenis == 'barang') ? $_POST['barang_id'] : $_POST['ruangan_id'];
     $jumlah = $_POST['jumlah'];
@@ -45,7 +46,7 @@ if (isset($_POST['submit'])) {
     } else {
         // 3. EKSEKUSI KE DATABASE
         $pinjam = new Peminjaman($db);
-        $hasil = $pinjam->tambahPeminjaman($user_id, $jenis, $item_id, $jumlah, $tgl_pinjam, $tgl_kembali, $keterangan);
+        $hasil = $pinjam->tambahPeminjaman($user_id, $nama_peminjam, $jenis, $item_id, $jumlah, $tgl_pinjam, $tgl_kembali, $keterangan);
 
         if ($hasil === true) {
             // BERHASIL: Redirect dengan msg=sukses (biar sama dengan dashboard)
@@ -64,10 +65,26 @@ if (isset($_POST['submit'])) {
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tambah Peminjaman</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media (max-width: 575.98px) {
+            .container { padding: 0 10px !important; }
+            .col-md-8 { max-width: 100% !important; }
+            .card { margin: 0 !important; }
+            .form-label { font-size: 0.9rem; font-weight: 600; }
+            .form-control, .form-select { font-size: 14px; padding: 10px 12px; }
+            .d-grid { gap: 1rem !important; }
+            .btn { width: 100% !important; padding: 12px !important; font-size: 14px !important; }
+            .row { margin-left: 0 !important; margin-right: 0 !important; }
+            .col-md-6 { padding-left: 0 !important; padding-right: 0 !important; margin-bottom: 12px !important; }
+            #form-barang, #form-ruangan { padding: 12px !important; margin-bottom: 12px !important; }
+            .alert { font-size: 12px; padding: 12px !important; }
+            .d-none.d-sm-inline { display: none !important; }
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -91,8 +108,16 @@ if (isset($_POST['submit'])) {
                         <form method="POST" onsubmit="return validateForm()">
 
                             <div class="mb-3">
+                                <label class="form-label fw-bold">Nama Peminjam <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" name="nama_peminjam" class="form-control"
+                                    placeholder="Masukkan nama peminjam (Orang/Divisi)" required>
+                            </div>
+
+                            <div class="mb-3">
                                 <label class="form-label fw-bold">Jenis Peminjaman</label>
-                                <select name="jenis_peminjaman" id="jenis" class="form-select" onchange="toggleForm()" required>
+                                <select name="jenis_peminjaman" id="jenis" class="form-select" onchange="toggleForm()"
+                                    required>
                                     <option value="">-- Pilih Jenis --</option>
                                     <option value="barang">📦 Pinjam Barang (Inventaris)</option>
                                     <option value="ruangan">🏫 Booking Ruangan (Fasilitas)</option>
@@ -105,7 +130,8 @@ if (isset($_POST['submit'])) {
                                     <?php while ($b = $listBarang->fetch_assoc()): ?>
                                         <?php if ($b['stok'] == 0): ?>
                                             <!-- [UX IMPROVEMENT] Barang stok habis: disabled + gray out -->
-                                            <option value="<?= $b['id'] ?>" disabled style="background-color: #e9ecef; color: #999;">
+                                            <option value="<?= $b['id'] ?>" disabled
+                                                style="background-color: #e9ecef; color: #999;">
                                                 <?= $b['nama_barang'] ?> (STOK HABIS)
                                             </option>
                                         <?php else: ?>
@@ -124,7 +150,8 @@ if (isset($_POST['submit'])) {
                                 <label class="form-label">Pilih Ruangan</label>
                                 <select name="ruangan_id" class="form-select">
                                     <?php while ($r = $listRuang->fetch_assoc()): ?>
-                                        <option value="<?= $r['id'] ?>"><?= $r['nama_ruangan'] ?> (Kapasitas: <?= $r['kapasitas'] ?>)</option>
+                                        <option value="<?= $r['id'] ?>"><?= $r['nama_ruangan'] ?> (Kapasitas:
+                                            <?= $r['kapasitas'] ?>)</option>
                                     <?php endwhile; ?>
                                 </select>
                             </div>
@@ -132,17 +159,20 @@ if (isset($_POST['submit'])) {
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">Tanggal Mulai</label>
-                                    <input type="datetime-local" name="tgl_pinjam" id="tgl_pinjam" class="form-control" required>
+                                    <input type="datetime-local" name="tgl_pinjam" id="tgl_pinjam" class="form-control"
+                                        required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">Tanggal Selesai</label>
-                                    <input type="datetime-local" name="tgl_kembali" id="tgl_kembali" class="form-control" required>
+                                    <input type="datetime-local" name="tgl_kembali" id="tgl_kembali"
+                                        class="form-control" required>
                                 </div>
                             </div>
 
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Keperluan / Keterangan</label>
-                                <textarea name="keterangan" class="form-control" rows="3" placeholder="Contoh: Untuk kegiatan praktikum pengganti..." required></textarea>
+                                <textarea name="keterangan" class="form-control" rows="3"
+                                    placeholder="Contoh: Untuk kegiatan praktikum pengganti..." required></textarea>
                             </div>
 
                             <div class="d-grid gap-2">
